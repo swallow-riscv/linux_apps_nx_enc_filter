@@ -21,7 +21,7 @@
 #include "NX_SystemCall.h"
 #include "NX_CFileWriteFilter.h"
 
-#define		DTAG "[FileWrite]"
+#define		DTAG "[FileWrite] "
 #include "NX_DebugMsg.h"
 
 //////////////////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ NX_CFileWriteFilter::NX_CFileWriteFilter() :
 {
 	m_pInputPin = (NX_CVideoRenderInputPin*)new NX_CVideoRenderInputPin( this );
 	m_pInQueue = new NX_CSampleQueue(MAX_NUM_IN_QUEUE);
-	NX_DbgMsg(DBG_INFO, "NX_CFileWriteFilter()\n");
+	NX_DbgMsg(DBG_TRACE, DTAG"NX_CFileWriteFilter()\n");
 }
 
 NX_CFileWriteFilter::~NX_CFileWriteFilter()
@@ -43,7 +43,7 @@ NX_CFileWriteFilter::~NX_CFileWriteFilter()
 		delete m_pInputPin;
 	if( m_pInQueue )
 		delete m_pInQueue;
-	NX_DbgMsg(DBG_INFO, "~NX_CFileWriteFilter()\n");
+	NX_DbgMsg(DBG_TRACE, DTAG"~NX_CFileWriteFilter()\n");
 }
 
 
@@ -90,7 +90,7 @@ bool NX_CFileWriteFilter::Run()
 
 bool NX_CFileWriteFilter::Stop()
 {
-	NX_DbgMsg( DBG_INFO, " Stop() ++\n" );
+	NX_DbgMsg( DBG_TRACE, DTAG"Stop() ++\n" );
 
 	//	Set Thread End Command
 	ExitThread();
@@ -104,13 +104,13 @@ bool NX_CFileWriteFilter::Stop()
 
 	if( true == m_bRunning )
 	{
-		NX_DbgMsg(DBG_TRACE, " Stop() : pthread_join() ++\n" );
+		NX_DbgMsg(DBG_TRACE, DTAG"Stop() : pthread_join() ++\n" );
 		m_bExitThread = true;
 		pthread_join( m_hThread, NULL );
 		m_bRunning = false;
-		NX_DbgMsg( DBG_TRACE, " Stop() : pthread_join() --\n" );
+		NX_DbgMsg( DBG_TRACE, DTAG"Stop() : pthread_join() --\n" );
 	}
-	NX_DbgMsg( DBG_INFO, " Stop() --\n" );
+	NX_DbgMsg( DBG_TRACE, DTAG"Stop() --\n" );
 	return true;
 }
 
@@ -142,20 +142,20 @@ void NX_CFileWriteFilter::ThreadProc()
 	FILE *hFile = NULL;
 	uint8_t *pBuf;
 	int32_t bufSize;
+	int32_t fileIndex = 0;
 
 	uint64_t frameCnt = 0;
+	uint32_t localFrameCnt = 0;
 	int64_t startTime, deltaTime;
 
 	if( !m_pInQueue )
 		return ;
 
-	hFile = fopen( m_FileName, "wb");
-
 	while(1)
 	{
 		while( m_bPaused && !m_bExitThread )
 		{
-			NX_DbgMsg( DBG_INFO, "Paused.\n" );
+			NX_DbgMsg( DBG_INFO, DTAG"Paused.\n" );
 			m_SemPause.Pend( 500000 );
 		}
 		if( m_bExitThread ){ break; }
@@ -165,17 +165,46 @@ void NX_CFileWriteFilter::ThreadProc()
 
 		if( !pSample )									break;
 
+		if( frameCnt == 0 )
+		{
+			startTime = NX_GetTickCount();
+		}
+
+		if( m_NumOutFiles <= 1 && frameCnt == 0 )
+		{
+			hFile = fopen( m_FileName, "wb");
+			NX_DbgMsg(DBG_INFO, DTAG"Create %s\n", m_FileName);
+		}
+
+		//	Single File Mode
+		if( (m_NumOutFiles>1) && (pSample->IsSyncPoint() || (frameCnt == 0)) )
+		{
+			if( ((localFrameCnt % m_NumFrames) == (m_NumFrames-1)) || frameCnt == 0 )
+			{
+				if( hFile )
+				{
+					fclose(hFile);
+					hFile = NULL;
+				}
+				{
+					char filename[1024];
+					sprintf( filename, "%s_%03d.264", m_FileName, fileIndex);
+					hFile = fopen(filename, "wb");
+
+					NX_DbgMsg(DBG_INFO, DTAG"Create %s\n", filename);
+				}
+
+				fileIndex = (fileIndex + 1) % m_NumOutFiles;
+			}
+		}
+
 
 		pSample->GetPointer((void**)&pBuf, &bufSize );
 
 		if( hFile )
 		{
-			if( frameCnt == 0 )
-			{
-				startTime = NX_GetTickCount();
-			}
-			if( pSample->IsSyncPoint() )
-//			if( frameCnt % 30 == 29  )
+			if( ((m_NumFrames > 1) && (frameCnt % m_NumFrames == (m_NumFrames-1))) || 
+				((m_NumFrames<=1) && ((frameCnt % 30) == 29) ) )
 			{
 				float fps = 0;
 				deltaTime = NX_GetTickCount() - startTime;
@@ -184,23 +213,25 @@ void NX_CFileWriteFilter::ThreadProc()
 				{
 					fps = (frameCnt * 1000) / deltaTime;
 				}
-				NX_DbgMsg( DBG_DEBUG ,DTAG"Receive Key Frame(avg fps = %f) \n", fps);
+				NX_DbgMsg( DBG_DEBUG ,DTAG"Frame(avg fps = %f) \n", fps);
 			}
 
-			//fwrite( pBuf, 1, pSample->GetActualDataLength(), hFile );
-
-			frameCnt ++;
+			fwrite( pBuf, 1, pSample->GetActualDataLength(), hFile );
+			//hexdump( pBuf, pSample->GetActualDataLength()>16?16:pSample->GetActualDataLength() );
 		}
+
+		frameCnt ++;
+		localFrameCnt++;
 
 		pSample->Release();
 	}
 
-	NX_DbgMsg( DBG_INFO, "Exit renderer thread!!\n" );
+	NX_DbgMsg( DBG_INFO, DTAG"Exit renderer thread!!\n" );
 
 }
 
 
-bool NX_CFileWriteFilter::SetFileName( const char *pBuf )
+bool NX_CFileWriteFilter::SetFileName( const char *pBuf, int32_t numFrames, int32_t numOutFiles )
 {
 	if( NULL == pBuf || (MAX_PATH-1) < strlen( pBuf ) )
 		return false;
@@ -210,7 +241,10 @@ bool NX_CFileWriteFilter::SetFileName( const char *pBuf )
 	strcpy( m_FileName, pBuf );
 #endif
 
-	NX_DbgMsg( DBG_INFO, "SetFileName : %s\n", m_FileName );
+	m_NumFrames   = numFrames;
+	m_NumOutFiles = numOutFiles;
+
+	NX_DbgMsg( DBG_INFO, DTAG"SetFileName : FileName(%s), Frames(%d), OutFiles(%d)\n", m_FileName, m_NumFrames, m_NumOutFiles );
 
 	return true;
 }

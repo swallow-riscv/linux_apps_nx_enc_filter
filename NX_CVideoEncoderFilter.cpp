@@ -23,7 +23,7 @@
 
 #include "NX_CVideoEncoderFilter.h"
 
-#define DTAG "[VID_ENCODER]"
+#define DTAG "[VID_ENCODER] "
 #include "NX_DebugMsg.h"
 
 //////////////////////////////////////////////////////////////////////////////
@@ -32,7 +32,7 @@
 //
 #define MAX_VIDEO_RESOL_WIDTH		1920
 #define MAX_VIDEO_RESOL_HEIGHT		1080
-NX_CVideoEncoderFilter::NX_CVideoEncoderFilter( int32_t Width, int32_t Height, int32_t *ErrorCode ) : 
+NX_CVideoEncoderFilter::NX_CVideoEncoderFilter( int32_t Width, int32_t Height, int32_t initQP, int32_t *ErrorCode ) : 
 	m_bExitThread( true ),
 	m_pInputPin ( NULL ),
 	m_pOutputPin( NULL ),
@@ -41,7 +41,8 @@ NX_CVideoEncoderFilter::NX_CVideoEncoderFilter( int32_t Width, int32_t Height, i
 	m_Fps( 30 ),
 	m_Gop( 30 ),
 	m_Bitrate( 1024*4 ),
-	m_InitQP( 30 )
+	m_InitQP( initQP ),
+	m_FrameQP( initQP )
 {
 	*ErrorCode = 0;
 	m_pInputPin		= new NX_CVideoDecoderInputPin( this );
@@ -80,7 +81,7 @@ void *NX_CVideoEncoderFilter::ThreadStub( void *pObj )
 
 int32_t	NX_CVideoEncoderFilter::SetEncoderInfo( int32_t width, int32_t height, int32_t fps, int32_t gop, uint32_t bitrate, int32_t initQP )
 {
-	printf("~~~~~~~~@@@@@ width = %d, height = %d, fps = %d, gop = %d, bitrate = %d, initqp = %d\n", width, height, fps, gop, bitrate, initQP);
+	NX_DbgMsg( DBG_INFO, "width = %d, height = %d, fps = %d, gop = %d, bitrate = %d, initqp = %d\n", width, height, fps, gop, bitrate, initQP);
 	m_Width   = width;
 	m_Height  = height;
 	m_Fps     = fps;
@@ -101,11 +102,13 @@ void NX_CVideoEncoderFilter::ThreadProc()
 	int32_t seqSize;
 	int32_t ret;
 	int64_t mediaTime;
+	int32_t half = 1;
 
 	bool bInit = false;;
 
 	NX_V4L2ENC_HANDLE hEnc;
 	NX_V4L2ENC_PARA encPara;
+	uint32_t frameCnt = 0;
 
 
 	while(1)
@@ -144,7 +147,7 @@ void NX_CVideoEncoderFilter::ThreadProc()
 			encPara.initialQp          = m_InitQP;
 			encPara.numIntraRefreshMbs = 0;
 			encPara.searchRange        = 0;
-			encPara.enableAUDelimiter  = 1;
+			encPara.enableAUDelimiter  = 0;
 			encPara.imgFormat          = hMem->format;
 			encPara.imgBufferNum       = MAX_BUFFER_COUNT;
 			encPara.imgPlaneNum        = hMem->planes;
@@ -170,15 +173,19 @@ void NX_CVideoEncoderFilter::ThreadProc()
 		}
 
 		//	Encoding
+		if( (frameCnt & 0x1) )
 		{
 			NX_V4L2ENC_IN encIn;
 			NX_V4L2ENC_OUT encOut;
+			NX_VID_MEMORY_INFO memInfo;
+			memcpy( &memInfo, pInBuf, sizeof(memInfo) );
 
-			encIn.pImage = (NX_VID_MEMORY_HANDLE) pInBuf;
+			//encIn.pImage = (NX_VID_MEMORY_HANDLE) pInBuf;
+			encIn.pImage = &memInfo;
 			encIn.imgIndex = 0;
-			encIn.forcedIFrame = 0;
+			encIn.forcedIFrame = 1;
 			encIn.forcedSkipFrame = 0;
-			encIn.quantParam = 25;
+			encIn.quantParam = m_FrameQP;
 			ret = NX_V4l2EncEncodeFrame(hEnc, &encIn, &encOut);
 			//	NX_DbgMsg( DBG_TRACE, DTAG"encOut.strmSize= %d\n", encOut.strmSize );
 			pInSample->Release();
@@ -217,6 +224,12 @@ void NX_CVideoEncoderFilter::ThreadProc()
 				NX_DbgMsg( DBG_TRACE, DTAG"GetDeliveryBuffer --\n" );
 			}
 		}
+		else
+		{
+			if( pInSample )
+				pInSample->Release();
+		}
+		frameCnt ++;
 	}
 
 EXIT_THREAD:

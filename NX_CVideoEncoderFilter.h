@@ -34,7 +34,7 @@ class NX_CVideoEncoderFilter :
 	public NX_CBaseFilter
 {
 public:
-	NX_CVideoEncoderFilter( int32_t Width, int32_t Height, int32_t *ErrorCode );
+	NX_CVideoEncoderFilter( int32_t Width, int32_t Height, int32_t initQP, int32_t *ErrorCode );
 	virtual ~NX_CVideoEncoderFilter();
 
 public:	//	for Video Rendering
@@ -67,6 +67,7 @@ private:
 	int32_t		m_Gop;
 	uint32_t	m_Bitrate;
 	int32_t		m_InitQP;
+	int32_t		m_FrameQP;
 
 private:
 	NX_CVideoEncoderFilter (NX_CVideoEncoderFilter &Ref);

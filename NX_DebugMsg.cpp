@@ -18,7 +18,7 @@
 
 #include "NX_DebugMsg.h"
 
-static unsigned int gst_TargetDebugLevel = PLAYER_DBG_LEVEL_DEBUG;	//	Error
+static unsigned int gst_TargetDebugLevel = PLAYER_DBG_LEVEL_INFO;	//	Error
 void NX_ChangeDebugLevel( unsigned int TargetLevel )
 {
 	printf(DTAG ">>> NX_ChangeDebugLevel : %d to %d\n", gst_TargetDebugLevel, TargetLevel);

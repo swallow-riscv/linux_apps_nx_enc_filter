@@ -26,7 +26,7 @@
 #define SVN_REVISION		"$Rev: 1816 $"
 #define SVN_DATE			"$Date: 2011-10-31 22:39:13 +0900 (월, 31 10 2011) $"
 
-NX_EncoderMgr::NX_EncoderMgr( int32_t Width, int32_t Height, int32_t numFiles )
+NX_EncoderMgr::NX_EncoderMgr( int32_t Width, int32_t Height, int32_t initQP, int32_t numFiles )
 	//	Initialize Filters
 	: m_pCapture(NULL)
 	, m_pEncoder(NULL)
@@ -75,7 +75,7 @@ NX_EncoderMgr::NX_EncoderMgr( int32_t Width, int32_t Height, int32_t numFiles )
 		m_pPinVipOut = m_pCapture->GetPin(0);
 	}
 
-	m_pEncoder = new NX_CVideoEncoderFilter(m_Width, m_Height, &ErrorCode);
+	m_pEncoder = new NX_CVideoEncoderFilter(m_Width, m_Height, initQP, &ErrorCode);
 	{
 		m_pPinEncIn  = m_pEncoder->GetPin(0);
 		m_pPinEncOut = m_pEncoder->GetPin(1);

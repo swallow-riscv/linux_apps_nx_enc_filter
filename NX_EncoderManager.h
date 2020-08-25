@@ -25,7 +25,7 @@ typedef struct tag_PLAYER_EVENT_MESSAGE
 class NX_EncoderMgr : public NX_CEventReceiver
 {
 public:
-	NX_EncoderMgr(int32_t Width, int32_t Height, int32_t numFiles);
+	NX_EncoderMgr(int32_t Width, int32_t Height, int32_t initQP, int32_t numFiles);
 	~NX_EncoderMgr();
 
 public:
@@ -36,8 +36,8 @@ public:
 	int32_t Seek( int64_t time );
 	int32_t CurrentTime( int64_t *time );
 
-	int32_t SetFileName( const char *FileName ){
-		if( m_pWriter )	return m_pWriter->SetFileName( FileName );
+	int32_t SetFileName( const char *FileName, int32_t frames, int32_t outfiles ){
+		if( m_pWriter )	return m_pWriter->SetFileName( FileName, frames, outfiles );
 		return -1;
 	}
 

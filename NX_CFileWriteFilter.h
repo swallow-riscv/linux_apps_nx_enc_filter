@@ -51,7 +51,7 @@ public:	//	for Video Rendering
 	void				Resume(void);
 
 
-	bool SetFileName( const char *pBuf );
+	bool SetFileName( const char *pBuf, int32_t numFrames, int32_t numOutFiles );
 
 
 	enum	{ MAX_NUM_IN_QUEUE = 64 };
@@ -66,6 +66,8 @@ public:
 	NX_CSemaphore				m_SemPause;
 
 	char						m_FileName[MAX_PATH];
+	int32_t						m_NumFrames;
+	int32_t						m_NumOutFiles;			//	Output File Rotate
 
 	
 private:

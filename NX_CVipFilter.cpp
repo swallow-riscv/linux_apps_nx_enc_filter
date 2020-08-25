@@ -255,8 +255,8 @@ void NX_CVipFilter::ThreadProc()
 			void *pBuf = NULL;
 			int32_t bufSize = 0;
 			pSample->GetPointer( &pBuf, &bufSize );
-			memcpy( pBuf, m_hCamMem[bufIdx], sizeof(NX_MEMORY_INFO) );
-			pSample->SetActualDataLength( sizeof(NX_MEMORY_INFO) );
+			memcpy( pBuf, m_hCamMem[bufIdx], sizeof(NX_VID_MEMORY_INFO) );
+			pSample->SetActualDataLength( sizeof(NX_VID_MEMORY_INFO) );
 			//NX_DbgMsg( DBG_TRACE, DTAG"Deliver Sample = %d\n", pSample->GetActualDataLength() );
 			m_pVideoOut->Deliver(pSample);
 			pSample->Release();

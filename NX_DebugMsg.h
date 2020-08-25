@@ -24,7 +24,7 @@
 #define PLAYER_DBG_LEVEL_TRACE		5
 #define PLAYER_DBG_LEVEL_VERBOSE	6
 
-void NX_ChgDbgLvl( unsigned int TargetLevel );
+void NX_ChangeDebugLevel( unsigned int TargetLevel );
 void NX_DbgMsg( unsigned int level, const char *format, ... );
 void NX_RelMsg( const char *format, ... );
 void NX_ErrMsg(const char* format, ...);
