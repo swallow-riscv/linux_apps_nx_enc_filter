@@ -102,7 +102,6 @@ void NX_CVideoEncoderFilter::ThreadProc()
 	int32_t seqSize;
 	int32_t ret;
 	int64_t mediaTime;
-	int32_t half = 1;
 
 	bool bInit = false;;
 
@@ -173,7 +172,8 @@ void NX_CVideoEncoderFilter::ThreadProc()
 		}
 
 		//	Encoding
-		if( (frameCnt & 0x1) )
+//		if( (frameCnt & 0x1) )		//	Half Encoding
+		if( 1 )
 		{
 			NX_V4L2ENC_IN encIn;
 			NX_V4L2ENC_OUT encOut;
