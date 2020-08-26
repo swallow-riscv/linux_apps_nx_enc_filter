@@ -66,7 +66,7 @@ static void help_opt(int32_t argc, char *argv[])
 static void parse_opt( int32_t argc, char *argv[] )
 {
 	int32_t opt;
-	while (-1 != (opt = getopt(argc, argv, "t:vhd:g:b:n:m:f:")))
+	while (-1 != (opt = getopt(argc, argv, "t:vhd:g:b:n:m:f:q:")))
 	{
 		switch (opt)
 		{
@@ -99,6 +99,10 @@ static void parse_opt( int32_t argc, char *argv[] )
 					gWidth  = 1280;
 					gHeight = 720;
 					gFps    = 30;
+
+					gBitrate = 0;	// VBR
+					gGop     = 1;
+					gInitQP  = 32;
 				}
 				else if( gMode == 1 )
 				{
@@ -106,10 +110,15 @@ static void parse_opt( int32_t argc, char *argv[] )
 					gHeight  = 480;
 					gFps     = 15;
 					gBitrate = 1500;
+					gGop     = 15;
+					gInitQP  = 25;
 				}
 				break;
 			case 't':
 				gTestTime = atoi(optarg);
+				break;
+			case 'q':
+				gInitQP = atoi(optarg);
 				break;
 			default: break;
 		}

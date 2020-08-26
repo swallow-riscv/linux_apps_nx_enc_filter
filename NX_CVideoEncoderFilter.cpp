@@ -187,7 +187,7 @@ void NX_CVideoEncoderFilter::ThreadProc()
 			encIn.forcedSkipFrame = 0;
 			encIn.quantParam = m_FrameQP;
 			ret = NX_V4l2EncEncodeFrame(hEnc, &encIn, &encOut);
-			//	NX_DbgMsg( DBG_TRACE, DTAG"encOut.strmSize= %d\n", encOut.strmSize );
+			NX_DbgMsg( DBG_TRACE, DTAG"encOut.strmSize= %d, QP = %d\n", encOut.strmSize, m_FrameQP );
 			pInSample->Release();
 
 			if( ret == 0 )
