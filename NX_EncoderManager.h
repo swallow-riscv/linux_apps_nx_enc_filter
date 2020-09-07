@@ -41,6 +41,11 @@ public:
 		return -1;
 	}
 
+	int32_t EnableFileWriting( bool enable ){
+		if( m_pWriter )	return m_pWriter->EnableFileWriting( enable );
+		return -1;
+	}
+
 	int32_t SetCameraInfo( int32_t deviceId, int32_t width, int32_t height )
 	{
 		if( m_pCapture )

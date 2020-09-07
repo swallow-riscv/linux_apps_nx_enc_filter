@@ -52,6 +52,7 @@ public:	//	for Video Rendering
 
 
 	bool SetFileName( const char *pBuf, int32_t numFrames, int32_t numOutFiles );
+	bool EnableFileWriting( bool enable );
 
 
 	enum	{ MAX_NUM_IN_QUEUE = 64 };
@@ -69,6 +70,7 @@ public:
 	int32_t						m_NumFrames;
 	int32_t						m_NumOutFiles;			//	Output File Rotate
 
+	bool						m_bEnFileWrite;
 	
 private:
 	NX_CFileWriteFilter (NX_CFileWriteFilter &Ref);

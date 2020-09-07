@@ -81,7 +81,7 @@ void *NX_CVideoEncoderFilter::ThreadStub( void *pObj )
 
 int32_t	NX_CVideoEncoderFilter::SetEncoderInfo( int32_t width, int32_t height, int32_t fps, int32_t gop, uint32_t bitrate, int32_t initQP )
 {
-	NX_DbgMsg( DBG_INFO, "width = %d, height = %d, fps = %d, gop = %d, bitrate = %d, initqp = %d\n", width, height, fps, gop, bitrate, initQP);
+	NX_DbgMsg( DBG_VERBOSE, "width = %d, height = %d, fps = %d, gop = %d, bitrate = %d, initqp = %d\n", width, height, fps, gop, bitrate, initQP);
 	m_Width   = width;
 	m_Height  = height;
 	m_Fps     = fps;
@@ -183,7 +183,7 @@ void NX_CVideoEncoderFilter::ThreadProc()
 			//encIn.pImage = (NX_VID_MEMORY_HANDLE) pInBuf;
 			encIn.pImage = &memInfo;
 			encIn.imgIndex = 0;
-			encIn.forcedIFrame = 1;
+			encIn.forcedIFrame = 0;
 			encIn.forcedSkipFrame = 0;
 			encIn.quantParam = m_FrameQP;
 			ret = NX_V4l2EncEncodeFrame(hEnc, &encIn, &encOut);

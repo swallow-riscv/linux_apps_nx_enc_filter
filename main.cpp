@@ -17,7 +17,6 @@
 //	History		:
 //
 //------------------------------------------------------------------------------
-
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
@@ -36,6 +35,9 @@
 #include "NX_DebugMsg.h"
 
 static char gOutputPre[1024] = "/home/root/enc_out";
+
+static bool gEnFileWriting = true;
+
 static uint32_t gBitrate = 4*1024;		//	4Mbps
 static uint32_t gGop     = 30;			//	Gop 30 fps
 static uint32_t gInitQP  = 25;
@@ -54,7 +56,8 @@ static void help_opt(int32_t argc, char *argv[])
 	printf(
 		"\n Usage : %s -d [target prefix]\n"
 		"  Options :\n"
-		"    -m [camera mode]         : 0 = 30fps@HD, 1 = 15fps@VGA (def:0)\n"
+		"    -m [camera mode]         : 0 = 30fps@HD, 1 = 15fps@VGA, 2 = 30fps@540 (def:0)\n"
+		"                               3 = 30fps@450, 4=30fps@360\n"
 		"    -d [target prefix]       : output target prefix\n"
 		"    -g [Gop]                 : GoP value (def:30)\n"
 		"    -b [Bitrate]             : encoding bitrate in Kbytes (def:4096(4MB))\n"
@@ -66,7 +69,7 @@ static void help_opt(int32_t argc, char *argv[])
 static void parse_opt( int32_t argc, char *argv[] )
 {
 	int32_t opt;
-	while (-1 != (opt = getopt(argc, argv, "t:vhd:g:b:n:m:f:q:")))
+	while (-1 != (opt = getopt(argc, argv, "t:vhd:g:b:n:m:f:q:w:")))
 	{
 		switch (opt)
 		{
@@ -90,8 +93,11 @@ static void parse_opt( int32_t argc, char *argv[] )
 				gNumOutFiles = atoi(optarg);
 				break;
 			case 'v':
-				NX_ChangeDebugLevel(PLAYER_DBG_LEVEL_DEBUG);
+			{
+				int32_t level = atoi(optarg);
+				NX_ChangeDebugLevel(level);
 				break;
+			}
 			case 'm':
 				gMode = atoi(optarg);
 				if( gMode == 0 )
@@ -102,7 +108,7 @@ static void parse_opt( int32_t argc, char *argv[] )
 
 					gBitrate = 0;	// VBR
 					gGop     = 1;
-					gInitQP  = 32;
+					gInitQP  = 40;
 				}
 				else if( gMode == 1 )
 				{
@@ -113,9 +119,39 @@ static void parse_opt( int32_t argc, char *argv[] )
 					gGop     = 15;
 					gInitQP  = 25;
 				}
+				else if( gMode == 2 )
+				{
+					gWidth   = 960;
+					gHeight  = 540;
+					gFps     = 30;
+					gBitrate = 4096;
+					gGop     = 30;
+					gInitQP  = 30;
+				}
+				else if( gMode == 3 )
+				{
+					gWidth   = 800;
+					gHeight  = 450;
+					gFps     = 30;
+					gBitrate = 4096;
+					gGop     = 30;
+					gInitQP  = 30;
+				}
+				else if( gMode == 4 )
+				{
+					gWidth   = 640;
+					gHeight  = 360;
+					gFps     = 30;
+					gBitrate = 4096;
+					gGop     = 30;
+					gInitQP  = 30;
+				}
 				break;
 			case 't':
 				gTestTime = atoi(optarg);
+				break;
+			case 'w':
+				gEnFileWriting = (atoi(optarg)) ? true : false;
 				break;
 			case 'q':
 				gInitQP = atoi(optarg);
@@ -132,9 +168,11 @@ int main( int argc, char *argv[] )
 
 	pMgr = new NX_EncoderMgr( gWidth, gHeight, gInitQP, 34 );
 
-	printf( "gWidth(%d), gHeight(%d), gFps(%d), gGop(%d), gBitrate(%d), gInitQP(%d)\n", gWidth, gHeight, gFps, gGop, gBitrate, gInitQP );
+	//	printf( "gWidth(%d), gHeight(%d), gFps(%d), gGop(%d), gBitrate(%d), gInitQP(%d)\n", gWidth, gHeight, gFps, gGop, gBitrate, gInitQP );
 	pMgr->SetEncoderInfo( gWidth, gHeight, gFps, gGop, gBitrate, gInitQP );
 	pMgr->SetCameraInfo( nx_clipper_video, gWidth, gHeight );
+	pMgr->EnableFileWriting( gEnFileWriting );
+
 	printf( "gOutputPre(%s), gNumFiles(%d), gNumOutFiles(%d)\n", gOutputPre, gNumGop, gNumOutFiles );
 	pMgr->SetFileName( gOutputPre, gNumGop, gNumOutFiles );
 

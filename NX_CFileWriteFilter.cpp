@@ -30,7 +30,8 @@
 //
 NX_CFileWriteFilter::NX_CFileWriteFilter() :
 	m_pInputPin(NULL),
-	m_pInQueue(NULL)
+	m_pInQueue(NULL),
+	m_bEnFileWrite( true )
 {
 	m_pInputPin = (NX_CVideoRenderInputPin*)new NX_CVideoRenderInputPin( this );
 	m_pInQueue = new NX_CSampleQueue(MAX_NUM_IN_QUEUE);
@@ -146,7 +147,7 @@ void NX_CFileWriteFilter::ThreadProc()
 
 	uint64_t frameCnt = 0;
 	uint32_t localFrameCnt = 0;
-	int64_t startTime, deltaTime;
+	int64_t startTime, deltaTime, currTime;
 
 	if( !m_pInQueue )
 		return ;
@@ -181,7 +182,7 @@ void NX_CFileWriteFilter::ThreadProc()
 		{
 			if( ((localFrameCnt % m_NumFrames) == (m_NumFrames-1)) || frameCnt == 0 )
 			{
-				if( hFile )
+				if( m_bEnFileWrite && hFile )
 				{
 					fclose(hFile);
 					hFile = NULL;
@@ -207,16 +208,31 @@ void NX_CFileWriteFilter::ThreadProc()
 				((m_NumFrames<=1) && ((frameCnt % 30) == 29) ) )
 			{
 				float fps = 0;
-				deltaTime = NX_GetTickCount() - startTime;
+#if 0
+				currTime = NX_GetTickCount();
+				deltaTime = currTime - startTime;
 
 				if( deltaTime > 0 )
 				{
 					fps = (frameCnt * 1000) / deltaTime;
 				}
-				NX_DbgMsg( DBG_DEBUG ,DTAG"Frame(avg fps = %f) \n", fps);
+#else
+				currTime = NX_GetTickCount();
+				deltaTime = currTime - startTime;
+				startTime = currTime;
+
+				if( deltaTime > 0 )
+				{
+					fps = ((float)m_NumFrames * 30. * 1000.) / (float)deltaTime;
+				}
+#endif
+				NX_DbgMsg( DBG_DEBUG ,DTAG"Frame(avg fps = %.2f) \n", fps);
 			}
 
-			fwrite( pBuf, 1, pSample->GetActualDataLength(), hFile );
+			if( m_bEnFileWrite )
+			{
+				fwrite( pBuf, 1, pSample->GetActualDataLength(), hFile );
+			}
 			//hexdump( pBuf, pSample->GetActualDataLength()>16?16:pSample->GetActualDataLength() );
 		}
 
@@ -246,6 +262,13 @@ bool NX_CFileWriteFilter::SetFileName( const char *pBuf, int32_t numFrames, int3
 
 	NX_DbgMsg( DBG_INFO, DTAG"SetFileName : FileName(%s), Frames(%d), OutFiles(%d)\n", m_FileName, m_NumFrames, m_NumOutFiles );
 
+	return true;
+}
+
+bool NX_CFileWriteFilter::EnableFileWriting( bool enable )
+{
+	NX_DbgMsg( DBG_INFO, DTAG"EnableFileWriting : enable (%d)\n", enable );
+	m_bEnFileWrite = enable;
 	return true;
 }
 
