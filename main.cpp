@@ -69,7 +69,7 @@ static void help_opt(int32_t argc, char *argv[])
 static void parse_opt( int32_t argc, char *argv[] )
 {
 	int32_t opt;
-	while (-1 != (opt = getopt(argc, argv, "t:vhd:g:b:n:m:f:q:w:")))
+	while (-1 != (opt = getopt(argc, argv, "t:v:hd:g:b:n:m:f:q:w:")))
 	{
 		switch (opt)
 		{
@@ -124,7 +124,7 @@ static void parse_opt( int32_t argc, char *argv[] )
 					gWidth   = 960;
 					gHeight  = 540;
 					gFps     = 30;
-					gBitrate = 4096;
+					gBitrate = 2048;
 					gGop     = 30;
 					gInitQP  = 30;
 				}
@@ -133,7 +133,7 @@ static void parse_opt( int32_t argc, char *argv[] )
 					gWidth   = 800;
 					gHeight  = 450;
 					gFps     = 30;
-					gBitrate = 4096;
+					gBitrate = 2048;
 					gGop     = 30;
 					gInitQP  = 30;
 				}
